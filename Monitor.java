@@ -88,7 +88,7 @@ public class Monitor implements Runnable {
         System.out.println("------------------------------------------------------------"); 
  
         System.out.println(); 
-        System.out.println("Atualizacao automatica do status: 2 segundos"); 
+        System.out.println("Atualizacao automatica do status: 20 segundos"); 
         System.out.println("============================================================"); 
         System.out.println(); 
  
