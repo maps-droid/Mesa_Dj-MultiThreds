@@ -7,7 +7,6 @@ import java.io.File;
 public class PlayerAudio {
 
     private Clip clip;
-
     private int volume = 100;
 
     public void tocar(String caminho) {
@@ -25,9 +24,8 @@ public class PlayerAudio {
 
             aplicarVolume();
 
+            // Mantém o áudio tocando continuamente
             clip.loop(Clip.LOOP_CONTINUOUSLY);
-
-            clip.start();
 
         } catch (Exception e) {
 
@@ -53,22 +51,23 @@ public class PlayerAudio {
     public void parar() {
 
         if (clip != null) {
+
             clip.stop();
             clip.close();
         }
     }
 
-    public void definirVolume(int volume) {
+    public void definirVolume(int novoVolume) {
 
-        if (volume < 0) {
-            volume = 0;
+        if (novoVolume < 0) {
+            novoVolume = 0;
         }
 
-        if (volume > 100) {
-            volume = 100;
+        if (novoVolume > 100) {
+            novoVolume = 100;
         }
 
-        this.volume = volume;
+        this.volume = novoVolume;
 
         aplicarVolume();
     }
@@ -84,28 +83,42 @@ public class PlayerAudio {
             return;
         }
 
-        if (!clip.isControlSupported(FloatControl.Type.MASTER_GAIN)) {
+        if (!clip.isControlSupported(
+                FloatControl.Type.MASTER_GAIN)) {
             return;
         }
 
         FloatControl controle =
-                (FloatControl) clip.getControl(FloatControl.Type.MASTER_GAIN);
+                (FloatControl) clip.getControl(
+                        FloatControl.Type.MASTER_GAIN
+                );
+
+        float ganho;
 
         if (volume == 0) {
 
-            controle.setValue(controle.getMinimum());
+            // Silêncio
+            ganho = controle.getMinimum();
 
-            return;
+        } else if (volume == 50) {
+
+            // volume intermediário
+             ganho = -6.0f;  
+
+        } else {
+
+            // Volume 100%
+            ganho = 0.0f;
         }
 
-        float minimo = controle.getMinimum();
-        float maximo = controle.getMaximum();
+        // Proteção contra os limites do dispositivo
+        if (ganho < controle.getMinimum()) {
+            ganho = controle.getMinimum();
+        }
 
-        float ganho = (float) (
-                minimo +
-                
-                (maximo - minimo) * (volume / 100.0)
-        );
+        if (ganho > controle.getMaximum()) {
+            ganho = controle.getMaximum();
+        }
 
         controle.setValue(ganho);
     }
