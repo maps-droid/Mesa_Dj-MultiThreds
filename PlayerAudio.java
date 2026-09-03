@@ -6,10 +6,12 @@ import java.io.File;
 
 public class PlayerAudio {
 
+    private static final long INICIO_SINCRONIA = System.nanoTime();
+
     private Clip clip;
     private int volume = 100;
 
-    public void tocar(String caminho) {
+    public synchronized void tocar(String caminho) {
 
         try {
 
@@ -24,7 +26,7 @@ public class PlayerAudio {
 
             aplicarVolume();
 
-            // Mantém o áudio tocando continuamente
+            sincronizarPosicao();
             clip.loop(Clip.LOOP_CONTINUOUSLY);
 
         } catch (Exception e) {
@@ -34,27 +36,43 @@ public class PlayerAudio {
         }
     }
 
-    public void pausar() {
+    public synchronized void pausar() {
 
         if (clip != null && clip.isRunning()) {
             clip.stop();
         }
     }
 
-    public void continuar() {
+    public synchronized void continuar() {
 
         if (clip != null && !clip.isRunning()) {
-            clip.start();
+            sincronizarPosicao();
+            clip.loop(Clip.LOOP_CONTINUOUSLY);
         }
     }
 
-    public void parar() {
+    public synchronized void parar() {
 
         if (clip != null) {
 
             clip.stop();
             clip.close();
         }
+    }
+
+    private void sincronizarPosicao() {
+
+        if (clip == null || clip.getFrameLength() <= 0) {
+            return;
+        }
+
+        long tempoDecorrido = System.nanoTime() - INICIO_SINCRONIA;
+        double framesDecorridos = tempoDecorrido
+                / 1_000_000_000.0
+                * clip.getFormat().getFrameRate();
+
+        long frame = (long) framesDecorridos % clip.getFrameLength();
+        clip.setFramePosition((int) frame);
     }
 
     public void definirVolume(int novoVolume) {
